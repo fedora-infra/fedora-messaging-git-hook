@@ -170,7 +170,7 @@ Releasing
 
 When cutting a new release, follow these steps:
 
-#. Update the version in ``pyproject.toml`` or by running ``poetry version [major|minor|patch]``
+#. Update the version in ``setup.cfg``
 #. Generate the release notes by running ``towncrier build``
 
 #. Commit the changes

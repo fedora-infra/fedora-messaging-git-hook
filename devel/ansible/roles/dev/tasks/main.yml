@@ -2,7 +2,6 @@
 - name: Install RPM packages
   dnf:
     name:
-      - poetry
       - python3-pip
       - tox
       - krb5-devel
@@ -10,8 +9,8 @@
       - gcc
     state: present
 
-- name: install python deps with poetry
-  shell: poetry install
+- name: install python deps
+  shell: pip install -e .[dev]
   become: true
   become_user: vagrant
   args:
@@ -19,7 +18,7 @@
 
 - name: compile the translations
   shell:
-    cmd: poetry run pybabel compile -d /home/vagrant/{{ name }}/{{ pkg_name }}/translations
+    cmd: pybabel compile -d /home/vagrant/{{ name }}/{{ pkg_name }}/translations
     # "removes" == "only if the file exists"
     removes: /home/vagrant/{{ name }}/{{ pkg_name }}/translations/messages.pot
   become: true

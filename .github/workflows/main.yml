@@ -16,13 +16,12 @@ jobs:
       - name: Install dependencies
         run: |
           dnf install -y pre-commit git libpq-devel krb5-devel
-          pip install poetry>=1.2
 
       - name: Mark the working directory as safe for Git
         run: git config --global --add safe.directory $PWD
 
       - name: Install the project
-        run: poetry install
+        run: pip3 install -e .[dev]
 
       - name: Run pre-commit checks
         run: pre-commit run --all-files
