@@ -2,7 +2,12 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import importlib.metadata
 
+try:
+    import importlib.metadata
 
-__version__ = importlib.metadata.version("fedora_messaging_git_hook")
+    __version__ = importlib.metadata.version("fedora_messaging_git_hook")
+except ImportError:
+    import importlib_metadata
+
+    __version__ = importlib_metadata.version("fedora_messaging_git_hook")

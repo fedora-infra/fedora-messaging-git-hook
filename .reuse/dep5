@@ -8,7 +8,7 @@ Source: http://github.com/fedora-infra/fedora-messaging-git-hook
 # Copyright: $YEAR $NAME <$CONTACT>
 # License: ...
 
-Files: *.yaml *.yml *.md *.toml .gitignore *.ini *.cfg Vagrantfile .s2i/* .github/* devel/ansible/* docs/*
+Files: *.yaml *.yml *.md *.toml .gitignore *.ini *.cfg Vagrantfile MANIFEST.in setup.py .s2i/* .github/* devel/ansible/* docs/*
 Copyright: 2023 Contributors to the Fedora Project
 License: GPL-3.0-or-later
 
