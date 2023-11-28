@@ -33,7 +33,7 @@ def mock_username(monkeypatch):
 
 def _make_git_repo(path, bare=False):
     os.makedirs(path)
-    cmd = ["git", "init", path.as_posix()]
+    cmd = ["git", "init", "-b", "main", path.as_posix()]
     if bare:
         cmd.insert(2, "--bare")
         hookpath = path
