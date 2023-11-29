@@ -8,7 +8,7 @@ You can install it [from PyPI](https://pypi.org/project/fedora-messaging-git-hoo
 
 ![PyPI](https://img.shields.io/pypi/v/fedora-messaging-git-hook.svg)
 ![Supported Python versions](https://img.shields.io/pypi/pyversions/fedora-messaging-git-hook.svg)
-![Build status](http://github.com/fedora-infra/fedora-messaging-git-hook/actions/workflows/main.yml/badge.svg?branch=develop)
+![Build status](http://github.com/fedora-infra/fedora-messaging-git-hook/actions/workflows/main.yml/badge.svg?branch=main)
 ![Documentation](https://readthedocs.org/projects/fedora-messaging-git-hook/badge/?version=latest)
 
 
