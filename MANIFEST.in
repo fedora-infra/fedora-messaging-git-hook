@@ -1,3 +1,6 @@
 include *.ini *.example
 graft tests
+recursive-exclude tests *.pyc
 graft docs
+prune docs/_build
+prune docs/_source
