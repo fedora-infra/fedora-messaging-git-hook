@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import datetime
 import getpass
 import os
 import subprocess as sp
@@ -42,14 +43,15 @@ def revs_between(repo, head, base):
     return [line.strip() for line in proc.stdout.strip().split("\n")]
 
 
-def build_stats(repo, commit):
-    files = defaultdict(lambda: defaultdict(int))
-
+def _get_diffs(repo, commit):
     # Calculate diffs against all parent commits
     diffs = [repo.diff(parent, commit) for parent in commit.parents]
     # Unless this is the first commit, with no parents.
-    diffs = diffs or [commit.tree.diff_to_tree(swap=True)]
+    return diffs or [commit.tree.diff_to_tree(swap=True)]
 
+
+def _build_stats(diffs):
+    files = defaultdict(lambda: defaultdict(int))
     for diff in diffs:
         for patch in diff:
             if hasattr(patch, "new_file_path"):
@@ -74,7 +76,16 @@ def build_stats(repo, commit):
         total["lines"] += stats["lines"]
         total["files"] += 1
 
-    return dict(files), dict(total)
+    return dict(files=dict(files), total=dict(total))
+
+
+def _build_patch(diffs):
+    all_patches = []
+    for diff in diffs:
+        for patch in diff:
+            patch_text = patch.text if hasattr(patch, "text") else patch.patch
+            all_patches.append(patch_text)
+    return "\n".join(p for p in all_patches if p is not None)
 
 
 def build_commit(repo, with_namespace, rev, branch):
@@ -88,7 +99,9 @@ def build_commit(repo, with_namespace, rev, branch):
     if isinstance(commit, pygit2.Tag):
         return None
 
-    files, total = build_stats(repo, commit)
+    diffs = _get_diffs(repo, commit)
+    stats = _build_stats(diffs)
+    patch = _build_patch(diffs)
     username = getpass.getuser()
     repo_path = os.path.abspath(repo.workdir or repo.path)
     if repo_path.endswith(".git"):
@@ -98,6 +111,10 @@ def build_commit(repo, with_namespace, rev, branch):
     else:
         namespace = None
     repo_name = os.path.basename(repo_path)
+    timestamp = datetime.datetime.fromtimestamp(
+        commit.commit_time,
+        datetime.timezone(datetime.timedelta(minutes=commit.commit_time_offset)),
+    )
 
     return dict(
         name=commit.author.name,
@@ -105,15 +122,14 @@ def build_commit(repo, with_namespace, rev, branch):
         username=username,
         summary=commit.message.split("\n")[0],
         message=commit.message,
-        stats=dict(
-            files=files,
-            total=total,
-        ),
+        stats=stats,
         rev=str(rev),
         path=repo.workdir or repo.path,
         repo=repo_name,
         namespace=namespace,
         branch=branch,
+        patch=patch,
+        date=timestamp.isoformat(),
     )
 
 
