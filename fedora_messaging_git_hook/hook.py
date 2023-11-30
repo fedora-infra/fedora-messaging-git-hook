@@ -17,6 +17,8 @@ import fedora_messaging.config
 import fedora_messaging.exceptions
 import pygit2
 
+from fedora_messaging_git_hook_messages import CommitV1
+
 
 def revs_between(repo, head, base):
     """Yield revisions between HEAD and BASE."""
@@ -188,7 +190,5 @@ def giveup_hdlr(details):
     on_giveup=giveup_hdlr,
 )
 def publish(commit):
-    message = fedora_messaging.api.Message(
-        topic="git.receive", body=dict(commit=commit, agent=commit["username"])
-    )
+    message = CommitV1(body=dict(commit=commit, agent=commit["username"]))
     fedora_messaging.api.publish(message)
