@@ -1,0 +1,71 @@
+%{?!python3_pkgversion:%global python3_pkgversion 3}
+
+%global srcname fedora-messaging-git-hook
+%global mod_name fedora_messaging_git_hook
+
+Name:           fedora-messaging-git-hook
+Version:        @@VERSION@@
+Release:        1%{?dist}
+Summary:        @@DESCRIPTION@@
+License:        GPL-3.0-or-later
+URL:            https://github.com/fedora-infra/fedora-messaging-git-hook
+Source0:        %pypi_source %{mod_name}
+
+BuildArch:      noarch
+
+BuildRequires:  python%{python3_pkgversion}-devel
+BuildRequires:  python%{python3_pkgversion}-setuptools
+# Tests
+BuildRequires:  python%{python3_pkgversion}-pytest
+BuildRequires:  python%{python3_pkgversion}-fedora-messaging
+BuildRequires:  python%{python3_pkgversion}-click
+BuildRequires:  python%{python3_pkgversion}-pygit2
+BuildRequires:  python%{python3_pkgversion}-backoff
+BuildRequires:  python%{python3_pkgversion}-fedora-messaging-git-hook-messages
+BuildRequires:  git
+BuildRequires:  python%{python3_pkgversion}-tomli-w
+%if 0%{?fedora} == 0 && 0%{?rhel} < 9
+BuildRequires:  python%{python3_pkgversion}-importlib-metadata
+%endif
+
+%{?python_enable_dependency_generator}
+%if %{undefined python_enable_dependency_generator} && %{undefined python_disable_dependency_generator}
+Requires:       python%{python3_pkgversion}-fedora-messaging
+Requires:       python%{python3_pkgversion}-click
+Requires:       python%{python3_pkgversion}-pygit2
+Requires:       python%{python3_pkgversion}-backoff
+Requires:       python%{python3_pkgversion}-fedora-messaging-git-hook-messages
+%endif
+
+%description
+@@LONG_DESCRIPTION@@
+
+
+%prep
+%autosetup -p1 -n %{srcname}-%{version}
+
+
+%build
+%py3_build
+
+
+%install
+rm -rf $RPM_BUILD_ROOT
+%py3_install
+
+
+%check
+%{__python3} -m pytest -vv tests/
+
+
+%files
+%license LICENSES/GPL-3.0-or-later.txt
+%doc README.md
+%{_bindir}/fedora-messaging-git-hook
+%{python3_sitelib}/%{mod_name}/
+%{python3_sitelib}/%{mod_name}-%{version}-py%{python3_version}.egg-info/
+
+
+%changelog
+* Thu Nov 30 2023 Aurélien Bompard <aurelien@bompard.org>
+- initial package
