@@ -83,7 +83,7 @@ def test_basic(tmp_path):
     _make_a_couple_commits(git_repo)
     with mock_sends(fm_api.Message, fm_api.Message):
         result = run_hook(git_repo / ".git")
-        # print(result.stdout, result.exc_info)
+        print(result.stdout, result.exc_info)
         sent_messages = [call[0][0] for call in fm_api._twisted_publish.call_args_list]
     assert len(sent_messages) == 2
     assert result.exit_code == 0
@@ -114,7 +114,7 @@ def test_bare(tmp_path):
     run(["git", "push"], cwd=git_clone, check=True)
     with mock_sends(fm_api.Message, fm_api.Message):
         result = run_hook(git_repo)
-        # print(result.stdout, result.exc_info)
+        print(result.stdout, result.exc_info)
         sent_messages = [call[0][0] for call in fm_api._twisted_publish.call_args_list]
     assert result.exit_code == 0
     assert len(sent_messages) == 2
@@ -139,7 +139,7 @@ with_namespace = true
         result = run_hook(
             git_repo / ".git", ["--config", tmp_path.joinpath("config.toml").as_posix()]
         )
-        # print(result.stdout, result.exc_info)
+        print(result.stdout, result.exc_info)
         sent_messages = [call[0][0] for call in fm_api._twisted_publish.call_args_list]
     assert result.exit_code == 0
     assert len(sent_messages) == 2
@@ -155,5 +155,5 @@ def test_delete_branch(tmp_path):
         last_commit_id = _get_last_commit_id(git_repo)
         hook_input = f"{last_commit_id} 0000000000000000000000000000000000000000 refs/heads/main\n"
         result = run_hook(git_repo, stdin=hook_input)
-        # print(result.stdout, result.exc_info)
+        print(result.stdout, result.exc_info)
     assert result.exit_code == 0
