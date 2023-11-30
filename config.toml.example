@@ -11,3 +11,4 @@ app = "git-hooks"
 [consumer_config]
 excluded_paths = []
 with_namespace = false
+url_template = "https://src.fedoraproject.org/{namespace}/{repo}/c/{rev}?branch={branch}"

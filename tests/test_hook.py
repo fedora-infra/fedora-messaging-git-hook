@@ -12,6 +12,7 @@ import pytest
 from click.testing import CliRunner
 from fedora_messaging import api as fm_api
 from fedora_messaging.testing import mock_sends
+import tomli_w
 
 
 from fedora_messaging_git_hook import cli
@@ -30,6 +31,13 @@ def mock_username(monkeypatch):
     monkeypatch.setattr(
         "fedora_messaging_git_hook.hook.getpass.getuser", mock.Mock(return_value="dummyuser")
     )
+
+
+def _make_config(tmp_path, **kwargs):
+    config_path = tmp_path / "config.toml"
+    with open(tmp_path / "config.toml", "wb") as fmconfig:
+        tomli_w.dump({"consumer_config": kwargs}, fmconfig)
+    return config_path.as_posix()
 
 
 def _make_git_repo(path, bare=False):
@@ -82,8 +90,11 @@ def test_basic(tmp_path):
     git_repo = tmp_path / "repo"
     _make_git_repo(git_repo)
     _make_a_couple_commits(git_repo)
+    config_path = _make_config(
+        tmp_path, url_template="http://example.com/{repo_fullname}/c/{rev}?branch={branch}"
+    )
     with mock_sends(fm_api.Message, fm_api.Message):
-        result = run_hook(git_repo / ".git")
+        result = run_hook(git_repo / ".git", args=["--config", config_path])
         print(result.stdout, result.exc_info)
         sent_messages = [call[0][0] for call in fm_api._twisted_publish.call_args_list]
     assert len(sent_messages) == 2
@@ -134,6 +145,13 @@ def test_basic(tmp_path):
         "--- /dev/null\n"
         "+++ b/something.txt\n"
     )
+    # URL
+    for index, msg in enumerate(sent_messages):
+        refspec = "main" + ((1 - index) * "^")
+        commit_id = _get_commit_id(git_repo, refspec=refspec)
+        assert msg.body["commit"]["url"] == "http://example.com/repo/c/{}?branch=main".format(
+            commit_id
+        )
 
 
 def test_bare(tmp_path):
@@ -154,22 +172,12 @@ def test_bare(tmp_path):
 
 
 def test_namespace(tmp_path):
-    with open(tmp_path / "config.toml", "w") as fmconfig:
-        fmconfig.write(
-            """
-# amqp_url = "amqp://username:password@rabbitmq.example.com/vhost"
-[consumer_config]
-excluded_paths = []
-with_namespace = true
-"""
-        )
+    config_path = _make_config(tmp_path, with_namespace=True)
     git_repo = tmp_path / "dummyns" / "dummyrepo"
     _make_git_repo(git_repo)
     _make_a_couple_commits(git_repo)
     with mock_sends(fm_api.Message, fm_api.Message):
-        result = run_hook(
-            git_repo / ".git", ["--config", tmp_path.joinpath("config.toml").as_posix()]
-        )
+        result = run_hook(git_repo / ".git", ["--config", config_path])
         print(result.stdout, result.exc_info)
         sent_messages = [call[0][0] for call in fm_api._twisted_publish.call_args_list]
     assert result.exit_code == 0

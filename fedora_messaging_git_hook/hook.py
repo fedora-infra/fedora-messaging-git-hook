@@ -90,7 +90,18 @@ def _build_patch(diffs):
     return "\n".join(p for p in all_patches if p is not None)
 
 
-def build_commit(repo, with_namespace, rev, branch):
+def _get_url(commit, config):
+    url_template = config.get("url_template")
+    if url_template is None:
+        return None
+    repo_fullname = commit["repo"]
+    namespace = commit.get("namespace")
+    if namespace:
+        repo_fullname = "{}/{}".format(namespace, repo_fullname)
+    return url_template.format(repo_fullname=repo_fullname, **commit)
+
+
+def build_commit(repo, config, rev, branch):
     commit = repo.revparse_single(str(rev))
 
     # Tags are a little funny, and vary between versions of pygit2, so we'll
@@ -108,7 +119,7 @@ def build_commit(repo, with_namespace, rev, branch):
     repo_path = os.path.abspath(repo.workdir or repo.path)
     if repo_path.endswith(".git"):
         repo_path = repo_path[:-4]
-    if with_namespace:
+    if config.get("with_namespace", False):
         namespace = repo_path.split(os.path.sep)[-2]
     else:
         namespace = None
@@ -118,7 +129,7 @@ def build_commit(repo, with_namespace, rev, branch):
         datetime.timezone(datetime.timedelta(minutes=commit.commit_time_offset)),
     )
 
-    return dict(
+    commit_dict = dict(
         name=commit.author.name,
         email=commit.author.email,
         username=username,
@@ -133,9 +144,11 @@ def build_commit(repo, with_namespace, rev, branch):
         patch=patch,
         date=timestamp.isoformat(),
     )
+    commit_dict["url"] = _get_url(commit_dict, config)
+    return commit_dict
 
 
-def process(repo, with_namespace, lines):
+def process(repo, config, lines):
     seen = []
     for line in lines:
         base, head, branch = line.split(" ")
@@ -149,7 +162,7 @@ def process(repo, with_namespace, lines):
             continue
 
         revs = revs_between(repo, head, base)
-        commits = [build_commit(repo, with_namespace, rev, branch) for rev in revs]
+        commits = [build_commit(repo, config, rev, branch) for rev in revs]
 
         click.echo(f"* Publishing information for {len(commits)} commits")
         for commit in reversed(commits):
