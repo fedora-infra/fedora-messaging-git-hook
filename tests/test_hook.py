@@ -3,6 +3,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import os
+import re
 from subprocess import run, PIPE
 from contextlib import contextmanager
 from unittest import mock
@@ -46,9 +47,9 @@ def _make_git_repo(path, bare=False):
     run(["chmod", "+x", hookpath.as_posix()])
 
 
-def _get_last_commit_id(git_dir, branch="main"):
+def _get_commit_id(git_dir, refspec="main"):
     return run(
-        ["git", "rev-list", "-1", branch],
+        ["git", "rev-list", "-1", refspec],
         stdout=PIPE,
         cwd=git_dir,
         check=True,
@@ -60,7 +61,7 @@ def run_hook(git_dir, args=None, stdin=None):
     env = os.environ.copy()
     env["GIT_DIR"] = git_dir.as_posix()
     if stdin is None:
-        last_commit_id = _get_last_commit_id(git_dir)
+        last_commit_id = _get_commit_id(git_dir)
         stdin = f"0000000000000000000000000000000000000000 {last_commit_id} refs/heads/main\n"
     runner = CliRunner()
     result = runner.invoke(cli.main, args or [], input="".join(stdin), env=env)
@@ -95,14 +96,44 @@ def test_basic(tmp_path):
     assert all(m.body["commit"]["namespace"] is None for m in sent_messages)
     assert all(m.body["commit"]["repo"] == "repo" for m in sent_messages)
     assert all(m.body["commit"]["path"] == (git_repo.as_posix() + "/") for m in sent_messages)
+    assert all(m.body["commit"]["branch"] == "main" for m in sent_messages)
+    # Summary
     assert [m.body["commit"]["summary"] for m in sent_messages] == [
         "initial commit",
         "second commit",
     ]
+    # Stats
     assert sent_messages[1].body["commit"]["stats"] == {
         "files": {"something.txt": {"additions": 0, "deletions": 0, "lines": 0}},
         "total": {"additions": 0, "deletions": 0, "files": 1, "lines": 0},
     }
+    # Rev
+    revs = (
+        run(
+            ["git", "rev-list", "--reverse", "main"],
+            stdout=PIPE,
+            cwd=git_repo,
+            check=True,
+            universal_newlines=True,
+        )
+        .stdout.strip()
+        .splitlines()
+    )
+    assert [m.body["commit"]["rev"] for m in sent_messages] == revs
+    # Date
+    assert all(
+        re.match(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d", m.body["commit"]["date"])
+        is not None
+        for m in sent_messages
+    )
+    # Patch
+    assert sent_messages[1].body["commit"]["patch"] == (
+        "diff --git a/something.txt b/something.txt\n"
+        "new file mode 100644\n"
+        "index 0000000..e69de29\n"
+        "--- /dev/null\n"
+        "+++ b/something.txt\n"
+    )
 
 
 def test_bare(tmp_path):
@@ -152,7 +183,7 @@ def test_delete_branch(tmp_path):
     _make_git_repo(git_repo)
     _make_a_couple_commits(git_repo)
     with mock_sends():
-        last_commit_id = _get_last_commit_id(git_repo)
+        last_commit_id = _get_commit_id(git_repo)
         hook_input = f"{last_commit_id} 0000000000000000000000000000000000000000 refs/heads/main\n"
         result = run_hook(git_repo, stdin=hook_input)
         print(result.stdout, result.exc_info)
