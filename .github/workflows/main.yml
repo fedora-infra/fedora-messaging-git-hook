@@ -164,6 +164,7 @@ jobs:
     name: Create a GitHub Release 📢
     needs:
       - publish-to-pypi
+      - build
     runs-on: ubuntu-latest
     permissions:
       contents: write  # IMPORTANT: mandatory for making GitHub Releases
