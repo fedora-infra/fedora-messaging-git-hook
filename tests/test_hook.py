@@ -93,10 +93,9 @@ def test_basic(tmp_path):
     config_path = _make_config(
         tmp_path, url_template="http://example.com/{repo_fullname}/c/{rev}?branch={branch}"
     )
-    with mock_sends(fm_api.Message, fm_api.Message):
+    with mock_sends(fm_api.Message, fm_api.Message) as sent_messages:
         result = run_hook(git_repo / ".git", args=["--config", config_path])
         # print(result.stdout, result.exc_info)
-        sent_messages = [call[0][0] for call in fm_api._twisted_publish.call_args_list]
     assert len(sent_messages) == 2
     assert result.exit_code == 0
     assert all(m.body["agent"] == "dummyuser" for m in sent_messages)
@@ -139,11 +138,11 @@ def test_basic(tmp_path):
     )
     # Patch
     assert sent_messages[1].body["commit"]["patch"] == (
-        "diff --git a/something.txt b/something.txt\n"
+        "diff --git c/something.txt c/something.txt\n"
         "new file mode 100644\n"
         "index 0000000..e69de29\n"
         "--- /dev/null\n"
-        "+++ b/something.txt\n"
+        "+++ c/something.txt\n"
     )
     # URL
     for index, msg in enumerate(sent_messages):
@@ -161,10 +160,9 @@ def test_bare(tmp_path):
     run(["git", "clone", git_repo.as_posix(), git_clone.as_posix()])
     _make_a_couple_commits(git_clone)
     run(["git", "push"], cwd=git_clone, check=True)
-    with mock_sends(fm_api.Message, fm_api.Message):
+    with mock_sends(fm_api.Message, fm_api.Message) as sent_messages:
         result = run_hook(git_repo)
         # print(result.stdout, result.exc_info)
-        sent_messages = [call[0][0] for call in fm_api._twisted_publish.call_args_list]
     assert result.exit_code == 0
     assert len(sent_messages) == 2
     assert all(m.body["commit"]["repo"] == "repo" for m in sent_messages)
@@ -176,10 +174,9 @@ def test_namespace(tmp_path):
     git_repo = tmp_path / "dummyns" / "dummyrepo"
     _make_git_repo(git_repo)
     _make_a_couple_commits(git_repo)
-    with mock_sends(fm_api.Message, fm_api.Message):
+    with mock_sends(fm_api.Message, fm_api.Message) as sent_messages:
         result = run_hook(git_repo / ".git", ["--config", config_path])
         # print(result.stdout, result.exc_info)
-        sent_messages = [call[0][0] for call in fm_api._twisted_publish.call_args_list]
     assert result.exit_code == 0
     assert len(sent_messages) == 2
     assert all(m.body["commit"]["repo"] == "dummyrepo" for m in sent_messages)
