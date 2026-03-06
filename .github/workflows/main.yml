@@ -85,11 +85,11 @@ jobs:
       fail-fast: false
       matrix:
         distro:
-          - fedora/fedora:37
-          - fedora/fedora:38
-          - fedora/fedora:39
+          - fedora/fedora:42
+          - fedora/fedora:43
           - centos/centos:stream8
           - centos/centos:stream9
+          - centos/centos:stream10
 
 
   # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
