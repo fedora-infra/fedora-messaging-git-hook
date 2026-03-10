@@ -138,11 +138,11 @@ def test_basic(tmp_path):
     )
     # Patch
     assert sent_messages[1].body["commit"]["patch"] == (
-        "diff --git c/something.txt c/something.txt\n"
+        "diff --git a/something.txt b/something.txt\n"
         "new file mode 100644\n"
         "index 0000000..e69de29\n"
         "--- /dev/null\n"
-        "+++ c/something.txt\n"
+        "+++ b/something.txt\n"
     )
     # URL
     for index, msg in enumerate(sent_messages):
