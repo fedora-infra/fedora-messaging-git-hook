@@ -1,0 +1,9 @@
+version = 1
+SPDX-PackageSupplier = "Fedora Infrastructure <admin@fedoraproject.org>"
+SPDX-PackageDownloadLocation = "http://github.com/fedora-infra/fedora-messaging-git-hook"
+
+[[annotations]]
+path = ["**.yaml", "**.yml", "**.md", "**.toml", ".gitignore", "**.ini", "**.cfg", "Vagrantfile", "**.in", "**.example", "setup.py", ".s2i/**", ".github/**", "devel/ansible/**", "docs/**"]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2023 Contributors to the Fedora Project"
+SPDX-License-Identifier = "GPL-3.0-or-later"
