@@ -52,19 +52,18 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: prepare centos 8
-        if: ${{ endsWith(matrix.distro, 'centos:stream8') }}
+      - name: prepare centos
+        if: ${{ startsWith(matrix.distro, 'centos/centos:') }}
         run: |
           dnf install -y "dnf-command(config-manager)"
-          dnf config-manager --set-enabled powertools
-          dnf install -y epel-release epel-next-release
+          dnf config-manager --set-enabled crb
+          source /etc/os-release
+          dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-${VERSION_ID}.noarch.rpm
 
       - name: prepare centos 9
         if: ${{ endsWith(matrix.distro, 'centos:stream9') }}
         run: |
-          dnf install -y "dnf-command(config-manager)"
-          dnf config-manager --set-enabled crb
-          dnf install -y epel-release epel-next-release
+          dnf install -y https://dl.fedoraproject.org/pub/epel/epel-next-release-latest-9.noarch.rpm
 
       - name: Install dependencies
         run: |
@@ -87,7 +86,6 @@ jobs:
         distro:
           - fedora/fedora:42
           - fedora/fedora:43
-          - centos/centos:stream8
           - centos/centos:stream9
           - centos/centos:stream10
 
